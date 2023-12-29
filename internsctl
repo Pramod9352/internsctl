@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+
+case "$1" in
+    --help | "")
+        echo "Usage"
+        echo "internsctl [--help | --version]"
+        echo "internsctl cpu getinfo"
+        echo "internsctl memory getinfo"
+        echo "internsctl user create <username>"
+        echo "internsctl user list [--sudo]"
+        echo "internsctl file getinfo <file-name> [--size | -s] [--permissions | -p] [--owner | -o] [--last-modified | -m]"
+        ;;
+    --version)
+        echo "internsctl v0.1.0"
+        ;;
+    cpu)
+        case "$2" in
+            getinfo | "")
+                case "$3" in
+                    "")
+                        lscpu
+                        ;;
+                    *)
+                        echo "CPU Get info doesn't expect subcommands"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            *)
+                echo "Invalid CPU subcommand: $2"
+                exit 1
+                ;;
+        esac
+        ;;
+    memory)
+        case "$2" in
+            getinfo | "")
+                case "$3" in
+                    "")
+                        free
+                        ;;
+                    *)
+                        echo "MEMORY Get info doesn't expect subcommands"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            *)
+                echo "Invalid MEMORY subcommand: $2"
+                exit 1
+                ;;
+        esac
+        ;;
+    user)
+        case "$2" in
+            create)
+                case "$3" in
+                    "")
+                        echo "for creating a user, please provide a username for the new user"
+                        exit 1
+                        ;;
+                    *)
+                        useradd "$3"
+                        ;;
+                esac
+                ;;
+            list)
+                case "$3" in
+                    "")
+                        # extract the first field (-f1) of each line in the /etc/passwd file
+                        # where fields are separated by : (-d:)
+                        cut -d: -f1 /etc/passwd | sort
+                        ;;
+                    --sudo)
+                        # read each line from output of cut -d: -f1 /etc/passwd | sort
+                        cut -d: -f1 /etc/passwd | sort | while read -r username; do
+                            sudo_out=$(sudo -lU "$username")
+                            # if sudo -lU username contains now allowed means username doesn't have sudo privilege
+                            if [[ $sudo_out != *"not allowed"* ]]; then
+                                echo "$username"
+                            fi
+                        done
+                        ;;
+                    *)
+                        echo "User list: invalid arguments $3"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            "")
+                echo "USER command requires a subcommand"
+                exit 1
+                ;;
+            *)
+                echo "Invalid USER subcommand: $2"
+                exit 1
+                ;;
+        esac
+        ;;
+    file)
+        case "$2" in
+            getinfo)
+                file_name="$3"
+                if [[ ! -f "$file_name" ]]; then
+                    echo "The specified file path does not exist."
+                    exit 1
+                fi
+                shift 3
+                file_name_compact=$(basename "$file_name")
+                file_access=$(stat -c "%A" "$file_name")
+                file_size=$(stat -c "%s" "$file_name")
+                file_owner=$(stat -c "%U" "$file_name")
+                file_modify=$(stat -c "%y" "$file_name")
+                if [[ $# -eq 0 ]]; then
+                    echo "   File:   $file_name_compact"
+                    echo " Access:   $file_access"
+                    echo "Size(B):   $file_size"
+                    echo "  Owner:   $file_owner"
+                    echo " Modify:   $file_modify"
+                    exit 0
+                fi
+                print_size=false
+                print_perm=false
+                print_owner=false
+                print_mod=false
+                while [[ $# -gt 0 ]]; do
+                    case "$1" in
+                        --size | -s)
+                            print_size=true
+                            ;;
+                        --permissions | -p)
+                            print_perm=true
+                            ;;
+                        --owner | -o)
+                            print_owner=true
+                            ;;
+                        --last-modified | -m)
+                            print_mod=true
+                            ;;
+                        *)
+                            echo "Error: Unrecognized argument for file get info: $1"
+                            exit 1
+                            ;;
+                    esac
+                    shift
+                done
+                if [ "$print_size" = true ] && [ "$print_perm" = false ] && [ "$print_owner" = false ] && [ "$print_mod" = false ]; then
+                    echo "$file_size"
+                    exit 0
+                elif [ "$print_size" = false ] && [ "$print_perm" = true ] && [ "$print_owner" = false ] && [ "$print_mod" = false ]; then
+                    echo "$file_access"
+                    exit 0
+                elif [ "$print_size" = false ] && [ "$print_perm" = false ] && [ "$print_owner" = true ] && [ "$print_mod" = false ]; then
+                    echo "$file_owner"
+                    exit 0
+                elif [ "$print_size" = false ] && [ "$print_perm" = false ] && [ "$print_owner" = false ] && [ "$print_mod" = true ]; then
+                    echo "$file_modify"
+                    exit 0
+                fi
+                echo "   File:   $file_name_compact"
+                if [ "$print_perm" = true ]; then
+                    echo " Access:   $file_access"
+                fi
+                if [ "$print_size" = true ]; then
+                    echo "Size(B):   $file_size"
+                fi
+                if [ "$print_owner" = true ]; then
+                    echo "  Owner:   $file_owner"
+                fi
+                if [ "$print_mod" = true ]; then
+                    echo " Modify:   $file_modify"
+                fi
+                ;;
+            "")
+                echo "file command expects a subcommand"
+                exit 1
+                ;;
+            *)
+                echo "Invalid FILE subcommand: $2"
+                exit 1
+                ;;
+        esac
+        ;;
+    *)
+        echo "Invalid command: $1"
+        exit 1
+        ;;
+esac
