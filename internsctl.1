@@ -1,0 +1,77 @@
+.TH INTERNSCTL 1 "December 29, 2023" "Version v0.1.0" "Internsctl Manual"
+
+.SH NAME
+internsctl \- perform common server operations
+
+.SH SYNOPSIS
+
+.B internsctl [\-\-help | \-\-version]
+.TP
+.B internsctl cpu getinfo
+.TP
+.B internsctl memory getinfo
+.TP
+.B internsctl user create <username>
+.TP
+.B internsctl user list [\-\-sudo]
+.TP
+.B internsctl file getinfo <file-name> [\-\-size | \-s] [\-\-permissions | \-p] [\-\-owner | \-o] [\-\-last-modified | \-m]
+
+
+
+.SH DESCRIPTION
+The .internsctl command is a utility for performing common server operations like getting information about cpu and memory, listing and creating users and getting information about files on the server.
+
+.SH OPTIONS
+.TP
+.B \-\-help
+Display a help message and exit.
+.TP
+.B \-\-version
+Display version information and exit.
+
+.SH CPU OPERATIONS
+.TP
+.B cpu getinfo
+Display information about the CPU similar to the lscpu command.
+
+.SH MEMORY OPERATIONS
+.TP
+.B memory getinfo
+Display information about memory usage similar to the free command.
+
+.SH USER OPERATIONS
+.TP
+.B user create <username>
+Create a new user with the specified username.
+.TP
+.B user list [\-\-sudo]
+List all users on the server. Use the \-\-sudo option to list users with sudo permissions.
+
+.SH FILE OPERATIONS
+.TP
+.B file getinfo <file-name>
+Get information about a specific file.
+.TP
+.B \-\-size, \-s
+Print the size of the file.
+.TP
+.B \-\-permissions, \-p
+Print file permissions.
+.TP
+.B \-\-owner, \-o
+Print the file owner.
+.TP
+.B \-\-last-modified, \-m
+Print the last modified timestamp.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful execution.
+.TP
+.B 1
+An error occurred.
+
+.SH AUTHOR
+This man page was written by [Your Name].
